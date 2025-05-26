@@ -5,6 +5,7 @@ package com.dali.fuaiagent.app;
 
 import com.dali.fuaiagent.advisor.MyLoggerAdvisor;
 import com.dali.fuaiagent.chatmemory.FileBasedChatMemory;
+import com.dali.fuaiagent.rag.QueryRewriter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -54,19 +55,23 @@ public class FuFuApp {
     @Resource
     private VectorStore vectorStore;
 
+    @Resource
+    private QueryRewriter queryRewriter;
+
     public  String doChatWithRag(String message, String chatId) {
         ChatResponse chatResponse = chatClient
                 .prompt()
-                .user(message)
+//                .user(message)
+               .user(queryRewriter.doQueryRewrite(message))//
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
 
-                // 应用知识库问答
-//                .advisors(new QuestionAnswerAdvisor(fufuAppVectorStore))
+//                 应用知识库问答
+                .advisors(new QuestionAnswerAdvisor(fufuAppVectorStore))
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
 
-                .advisors(new QuestionAnswerAdvisor(vectorStore))
+//                .advisors(new QuestionAnswerAdvisor(vectorStore))
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();

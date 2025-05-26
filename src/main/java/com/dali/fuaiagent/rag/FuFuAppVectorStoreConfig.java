@@ -17,13 +17,21 @@ public class FuFuAppVectorStoreConfig {
     @Resource
     private FuFuAppDocumentLoader fufuAppDocumentLoader;
 
+    @Resource
+    private MyTokenTextSplitter myTokenTextSplitter;
+
+    @Resource
+    private MyKeywordEnricher myKeywordEnricher;
+
     @Bean
     VectorStore fufuAppVectorStore(EmbeddingModel dashscopeEmbeddingModel) {
         SimpleVectorStore simpleVectorStore = SimpleVectorStore.builder(dashscopeEmbeddingModel)
                 .build();
         // 加载文档
         List<Document> documents = fufuAppDocumentLoader.loadMarkdowns();
-        simpleVectorStore.add(documents);
+//        List<Document> splitDocuments = myTokenTextSplitter.splitCustomized(documents);
+         List<Document> enrichDocuments =myKeywordEnricher.enrichDocuments(documents);
+        simpleVectorStore.add(enrichDocuments);
         return simpleVectorStore;
     }
 }
