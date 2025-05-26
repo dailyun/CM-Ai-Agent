@@ -1,6 +1,7 @@
 package com.dali.fuaiagent.advisor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.chat.client.advisor.api.*;
 import org.springframework.ai.chat.model.MessageAggregator;
 import reactor.core.publisher.Flux;
@@ -19,8 +20,7 @@ public class MyLoggerAdvisor implements CallAroundAdvisor, StreamAroundAdvisor {
 
     @Override
     public int getOrder() {
-        return 0;
-    }
+        return 5;}
 
     private AdvisedRequest before(AdvisedRequest request) {
         log.info("AI Request: {}", request.userText());
@@ -31,6 +31,7 @@ public class MyLoggerAdvisor implements CallAroundAdvisor, StreamAroundAdvisor {
         log.info("AI Response: {}", advisedResponse.response().getResult().getOutput().getText());
     }
 
+    @NotNull
     public AdvisedResponse aroundCall(AdvisedRequest advisedRequest, CallAroundAdvisorChain chain) {
         advisedRequest = this.before(advisedRequest);
         AdvisedResponse advisedResponse = chain.nextAroundCall(advisedRequest);
@@ -38,6 +39,7 @@ public class MyLoggerAdvisor implements CallAroundAdvisor, StreamAroundAdvisor {
         return advisedResponse;
     }
 
+    @NotNull
     public Flux<AdvisedResponse> aroundStream(AdvisedRequest advisedRequest, StreamAroundAdvisorChain chain) {
         advisedRequest = this.before(advisedRequest);
         Flux<AdvisedResponse> advisedResponses = chain.nextAroundStream(advisedRequest);

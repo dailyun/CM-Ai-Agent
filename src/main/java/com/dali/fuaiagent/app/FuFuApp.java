@@ -51,20 +51,26 @@ public class FuFuApp {
     @Resource
     private VectorStore fufuAppVectorStore;
 
+//    @Resource
+//    private VectorStore pgVectorVectorStore;
+
     public  String doChatWithRag(String message, String chatId) {
         ChatResponse chatResponse = chatClient
                 .prompt()
                 .user(message)
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
-                // 开启日志，便于观察效果
-                .advisors(new MyLoggerAdvisor())
+
                 // 应用知识库问答
                 .advisors(new QuestionAnswerAdvisor(fufuAppVectorStore))
+                // 开启日志，便于观察效果
+                .advisors(new MyLoggerAdvisor())
+
+//                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
-        log.info("content: {}", content);
+
         return content;
     }
 
