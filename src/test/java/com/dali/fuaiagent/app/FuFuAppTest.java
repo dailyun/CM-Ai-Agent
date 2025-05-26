@@ -20,7 +20,7 @@ class FuFuAppTest {
 
         String chatId = UUID.randomUUID().toString();
 
-        String message = "我们晚上吃什么？";
+        String message = "我们明天去哪玩？";
         String response = fuFuApp.doChatWithRag(message, chatId);
 
     }
