@@ -1,150 +1,130 @@
 <template>
   <footer class="app-footer">
     <div class="footer-content">
-      <div class="footer-section">
+      <div class="footer-main-info">
         <div class="footer-logo">
-          <h3>FUFU智能体应用平台</h3>
-        </div>
+          <h3>FUFU智能体</h3> </div>
         <div class="footer-links">
-          <a href="#">《用户协议》</a>
-          <a href="#">《隐私政策》</a>
+          <a href="#">用户协议</a>
+          <a href="#">隐私政策</a>
         </div>
       </div>
-
     </div>
-    
     <div class="footer-bottom">
-      <p>© {{ currentYear }} FUFU智能体应用平台 - 让FUFU为我服务</p>
-    </div>
+      <p>© {{ currentYear }} FUFU智能体. All Rights Reserved.</p> </div>
   </footer>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-
-// 计算当前年份
 const currentYear = computed(() => new Date().getFullYear())
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+
+:root {
+  --fufu-primary-blue: #72BFF4;
+  --fufu-white: #FFFFFF;
+  --fufu-border-gray: #E2E8F0;
+  --fufu-text-dark: #33475B;
+  --fufu-text-medium: #677A8C;
+  --fufu-text-light: #A0AEC0;
+}
+
 .app-footer {
-  background-color: #fff;
-  padding: 40px 0 20px;
-  color: #666;
-  border-top: 1px solid #eee;
+  background-color: var(--fufu-white);
+  padding: 15px 20px 10px 20px; /* 大幅减少垂直内边距 */
+  color: var(--fufu-text-medium);
+  border-top: 1px solid var(--fufu-border-gray);
   width: 100%;
-  margin-top: auto;
-  position: relative;
-  z-index: 2;
+  font-family: 'Inter', sans-serif;
+  flex-shrink: 0; /* 防止页脚被压缩 */
+  text-align: center; /* 内容居中 */
 }
 
 .footer-content {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  display: flex;
+  /* display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  padding: 0 20px;
+  align-items: center;  *移除复杂flex，简化为堆叠或内联块* */
+  margin-bottom: 8px; /* 底部内容与copyright的间距 */
 }
 
-.footer-section {
-  flex: 1;
-  min-width: 200px;
-  margin-bottom: 30px;
-  padding: 0 15px;
+.footer-main-info {
+  display: flex;
+  flex-direction: column; /* 小屏幕上垂直堆叠 */
+  align-items: center;
+  gap: 8px; /* 各元素间的小间距 */
+}
+
+@media (min-width: 600px) { /* 在稍大屏幕上可以水平排列 */
+  .footer-main-info {
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+  }
 }
 
 .footer-logo h3 {
-  font-size: 1.25rem;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.footer-section h4 {
-  font-size: 1rem;
-  margin-bottom: 15px;
-  color: #333;
+  font-size: 1rem; /* 减小字体 */
+  font-weight: 500;
+  margin: 0; /* 移除外边距 */
+  color: var(--fufu-text-dark);
 }
 
 .footer-links {
   display: flex;
-  flex-direction: column;
+  gap: 15px; /* 链接之间的间距 */
 }
 
 .footer-links a {
-  margin-bottom: 10px;
-  color: #666;
+  color: var(--fufu-text-medium);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s ease-in-out;
+  font-size: 0.8rem; /* 减小字体 */
 }
 
 .footer-links a:hover {
-  color: #007bff;
-}
-
-.qrcode {
-  display: flex;
-  align-items: center;
-}
-
-.qrcode-container {
-  text-align: center;
-}
-
-.qrcode-placeholder {
-  width: 90px;
-  height: 90px;
-  background-color: #f5f5f5;
-  margin: 0 auto 10px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-}
-
-.qrcode-placeholder:after {
-  content: '🤖';
+  color: var(--fufu-primary-blue);
 }
 
 .footer-bottom {
-  text-align: center;
-  padding-top: 20px;
-  margin-top: 20px;
-  border-top: 1px solid #eee;
-  color: #999;
-  font-size: 0.9rem;
+  padding-top: 8px; /* 与上方内容的间距 */
+  /* margin-top: 8px; * margin-bottom已处理间距 */
+  border-top: 1px solid var(--fufu-border-gray); /* 如果footer-content不为空，则保留此分隔线 */
+  color: var(--fufu-text-light);
+  font-size: 0.75rem; /* 减小字体 */
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .footer-content {
-    flex-direction: column;
-  }
-  
-  .footer-section {
-    width: 100%;
-    margin-bottom: 20px;
-    padding: 0;
-  }
+/* 如果footer-content为空（例如在超小屏幕隐藏了logo和links），则隐藏分隔线 */
+.footer-content:empty + .footer-bottom {
+  border-top: none;
+  padding-top: 0;
 }
 
+
+/* 针对非常小的屏幕，可以进一步简化，例如只显示版权 */
 @media (max-width: 480px) {
   .app-footer {
-    padding: 30px 0 15px;
+    padding: 10px 15px;
   }
-  
-  .footer-section h4 {
-    font-size: 0.95rem;
+  .footer-main-info {
+    /* 此时已是flex-direction: column */
   }
-  
-  .footer-links a {
+  .footer-logo h3 {
     font-size: 0.9rem;
   }
-  
-  .qrcode-placeholder {
-    width: 80px;
-    height: 80px;
+  .footer-links a {
+    font-size: 0.75rem;
+  }
+  .footer-links {
+    gap: 10px;
+  }
+  .footer-bottom {
+    font-size: 0.7rem;
   }
 }
-</style> 
+</style>
