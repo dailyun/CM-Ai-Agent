@@ -24,13 +24,12 @@
 </template>
 
 <script setup>
-// ... (脚本部分保持不变，这里省略以突出样式更改) ...
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHead } from '@vueuse/head'
-import ChatRoom from '../components/ChatRoom.vue'
+import ChatRoom from '../components/ChatRoom.vue' // 子组件，用于显示消息
 import AppFooter from '../components/AppFooter.vue'
-import { chatWithManus } from '../api'
+import { chatWithManus } from '../api' // 假设这个API方法返回一个 EventSource 实例
 
 useHead({
   title: 'AI智能体 - FUFU智能体应用平台',
@@ -47,100 +46,95 @@ useHead({
 })
 
 const router = useRouter()
-const messages = ref([])
-const connectionStatus = ref('disconnected')
+const messages = ref([]) // 这个数组会传递给 ChatRoom 组件
+const connectionStatus = ref('disconnected') // 'disconnected', 'connecting', 'connected', 'streaming', 'error', 'completed'
 let eventSource = null
 
-const addMessage = (content, isUser, type = '') => {
+// 通用方法：向消息列表中添加消息
+const addMessage = (content, isUser, type = 'ai-answer') => { // 默认 type 为 'ai-answer'，可以根据需要调整
   messages.value.push({
     content,
     isUser,
-    type,
+    type, // 例如：'user-question', 'ai-update', 'ai-error', 'ai-completion', 'status'
     time: new Date().getTime()
   })
 }
 
-const sendMessage = (message) => {
-  addMessage(message, true, 'user-question')
+const sendMessage = (userInput) => {
+  addMessage(userInput, true, 'user-question') // 添加用户发送的消息
 
   if (eventSource) {
-    eventSource.close()
+    eventSource.close() // 关闭任何已存在的连接
   }
 
   connectionStatus.value = 'connecting'
-  let messageBuffer = []
-  let lastBubbleTime = 0
-  let isFirstResponseChunk = true
-
-  const chineseEndPunctuation = ['。', '！', '？', '…', '\n']
-  const minBubbleInterval = 700
-  const maxBubbleLength = 60
-
-  const createBubble = (content, bubbleType = 'ai-answer') => {
-    if (!content.trim()) return
-
-    const now = Date.now()
-    const timeSinceLastBubble = now - lastBubbleTime
-
-    const processAdd = () => {
-      addMessage(content, false, bubbleType)
-      lastBubbleTime = Date.now()
-      messageBuffer = []
-      isFirstResponseChunk = false
-    }
-
-    if (isFirstResponseChunk || timeSinceLastBubble >= minBubbleInterval) {
-      processAdd()
-    } else {
-      setTimeout(processAdd, minBubbleInterval - timeSinceLastBubble)
-    }
-  }
+  addMessage("AI Agent 正在连接并思考中...", false, "status"); // 初始状态消息
 
   try {
-    eventSource = chatWithManus(message)
-    if (!eventSource || typeof eventSource.onmessage === 'undefined') {
+    // chatWithManus 现在应该返回一个 EventSource 实例
+    eventSource = chatWithManus(userInput) // userInput 是来自 ChatRoom 的用户消息内容
+
+    if (!eventSource || typeof eventSource.addEventListener !== 'function') {
+      console.error("chatWithManus did not return a valid EventSource object.", eventSource);
       throw new Error("chatWithManus did not return a valid EventSource object.");
     }
   } catch (error) {
-    console.error("Failed to initialize EventSource:", error);
-    addMessage("抱歉，连接AI智能体失败，请稍后再试。", false, "ai-error");
+    console.error("初始化 EventSource 失败:", error);
+    addMessage("抱歉，连接AI智能体失败（初始化错误），请稍后再试。", false, "ai-error");
     connectionStatus.value = 'error';
     return;
   }
 
-  eventSource.onmessage = (event) => {
-    connectionStatus.value = 'connected';
-    const data = event.data
-
-    if (data && data.trim() !== '[DONE]') {
-      messageBuffer.push(data)
-      const combinedText = messageBuffer.join('')
-      const lastChar = data.charAt(data.length - 1)
-
-      if (chineseEndPunctuation.includes(lastChar) || combinedText.length >= maxBubbleLength) {
-        createBubble(combinedText)
-      }
+  eventSource.onopen = () => {
+    console.log("SSE 连接已建立");
+    connectionStatus.value = 'connected'; // 连接已建立，等待数据
+    // 可以更新或移除之前的 "正在连接并思考中..." 消息
+    const statusMsgIndex = messages.value.findIndex(m => m.type === 'status' && m.content.includes("正在连接"));
+    if (statusMsgIndex !== -1) {
+      messages.value[statusMsgIndex].content = "AI Agent 已连接，等待回复...";
+    } else {
+      addMessage("AI Agent 已连接，等待回复...", false, "status");
     }
+  };
 
-    if (data.trim() === '[DONE]') {
-      if (messageBuffer.length > 0) {
-        createBubble(messageBuffer.join(''), 'ai-final')
-      }
-      connectionStatus.value = 'disconnected'
-      if (eventSource) eventSource.close()
+  // 监听 'agent_update' 事件 (用于AI的逐步回复)
+  eventSource.addEventListener('agent_update', (event) => {
+    console.log("收到 agent_update:", event.data);
+    connectionStatus.value = 'streaming'; // 正在接收数据流
+    // 移除"等待回复"之类的状态消息 (如果存在)
+    const statusMsgIndex = messages.value.findIndex(m => m.type === 'status');
+    if (statusMsgIndex !== -1 && messages.value.length > (statusMsgIndex +1) ) { // 只有当后面还有其他消息时才移除，或者根据具体逻辑
+      // 为简单起见，可以不清，让新消息直接追加
     }
-  }
+    addMessage(event.data, false, 'ai-update'); // 将AI的每一步回复作为新消息添加
+  });
 
+  // 监听 'agent_error' 事件 (用于服务器发送的应用级错误)
+  eventSource.addEventListener('agent_error', (event) => {
+    console.error("收到 agent_error:", event.data);
+    addMessage(`AI处理错误: ${event.data}`, false, 'ai-error');
+    connectionStatus.value = 'error';
+    if (eventSource) eventSource.close();
+  });
+
+  // 监听 'agent_completion' 事件 (用于任务完成的最终消息)
+  eventSource.addEventListener('agent_completion', (event) => {
+    console.log("收到 agent_completion:", event.data);
+    addMessage(event.data, false, 'ai-completion');
+    connectionStatus.value = 'completed'; // 或者 'disconnected'
+    if (eventSource) eventSource.close();
+  });
+
+  // 处理通用的SSE错误 (网络问题等)
   eventSource.onerror = (error) => {
-    console.error('SSE Error:', error)
-    if (messageBuffer.length > 0) {
-      createBubble(messageBuffer.join('') + "\n(连接中断)", 'ai-error')
-    } else if (connectionStatus.value !== 'disconnected') {
-      addMessage("抱歉，与AI智能体的通讯发生错误，请刷新页面或稍后再试。", false, "ai-error")
+    console.error('SSE 连接错误:', error);
+    // 只有在连接尚未被明确标记为完成或错误时才添加新的错误消息
+    if (connectionStatus.value !== 'completed' && connectionStatus.value !== 'error') {
+      addMessage("抱歉，与AI智能体的通讯发生网络错误或连接意外中断。", false, "ai-error");
     }
-    connectionStatus.value = 'error'
-    if (eventSource) eventSource.close()
-  }
+    connectionStatus.value = 'error'; // 最终状态标记为错误
+    if (eventSource) eventSource.close();
+  };
 }
 
 const goBack = () => {
@@ -148,16 +142,49 @@ const goBack = () => {
 }
 
 onMounted(() => {
-  addMessage('你好，我是AI智能体。我可以解答各类问题，提供专业建议，请问有什么可以帮助你的吗？', false, 'ai-answer')
+  addMessage('你好，我是AI智能体。我可以解答各类问题，提供专业建议，请问有什么可以帮助你的吗？', false, 'ai-answer') // 初始AI欢迎消息
   connectionStatus.value = 'disconnected'
 })
 
 onBeforeUnmount(() => {
   if (eventSource) {
     eventSource.close()
+    console.log('SSE 连接已在组件卸载时关闭。')
   }
 })
 </script>
+
+<style scoped>
+/* 你的现有CSS样式保持不变 */
+/* ... (省略你提供的所有CSS，请保留它们) ... */
+
+/* 你可以考虑在 ChatRoom.vue 组件的 <style scoped> 或全局样式中
+   为新的消息类型添加特定的CSS规则，例如：
+*/
+/* // 示例CSS (理想情况下放在 ChatRoom.vue 或全局)
+  .ai-message.ai-update .message-bubble {
+    background-color: var(--fufu-light-blue); // 已有的AI消息颜色
+    color: var(--fufu-text-dark);
+  }
+  .ai-message.ai-error .message-bubble {
+    background-color: #ffe9e9;
+    color: #d8000c;
+    border: 1px solid #f5c6cb;
+  }
+  .ai-message.ai-completion .message-bubble {
+    background-color: #e9ffe9;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    font-weight: bold;
+  }
+  .ai-message.status .message-bubble { // 用于 "AI正在思考中..." 等状态消息
+    background-color: #f0f0f0;
+    color: #555;
+    font-style: italic;
+    text-align: center;
+  }
+*/
+</style>
 
 <style scoped>
 /* Import Inter font (optional if globally imported) */
