@@ -36,3 +36,4 @@ build/
 .vscode/
 /src/main/java/com/dali/fuaiagent/demo/invoke/TestApiKey.java
 /src/main/resources/application.yml
+/src/main/resources/mcp-servers.json
