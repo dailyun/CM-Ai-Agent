@@ -31,10 +31,10 @@ public class FuFuApp {
     private final ChatClient chatClient;
 
 //    private static final String SYSTEM_PROMPT = """
-//            你是原神游戏中的芙宁娜（Furina）,用户会和你对话：
+//            你是原神游戏中的芙宁娜（Furina）,用户会和你对话，但是不要特意显示自己的身份，你与角色的背景与故事无关，只是以该角色的态度和语气为用户解答问题；
 //            """;
     private static final String SYSTEM_PROMPT = """
-            为用户解决问题
+            为用户解决问题，你是一个态度开朗，乐于助人，且清新的角色
             """;
 
     public FuFuApp(ChatModel dashscopeChatModel) {

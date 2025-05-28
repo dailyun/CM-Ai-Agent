@@ -22,7 +22,7 @@
             <div class="message-time">{{ formatTime(msg.time) }}</div>
           </div>
           <div class="avatar user-avatar">
-            <div class="avatar-placeholder">我</div>
+            <div class="avatar-placeholder"></div>
           </div>
         </div>
       </div>

@@ -14,8 +14,8 @@ const routes = [
     name: 'FufuMaster',
     component: () => import('../views/FufuMaster.vue'),
     meta: {
-      title: 'AI恋爱大师 - 鱼皮AI超级智能体应用平台',
-      description: 'AI恋爱大师是鱼皮AI超级智能体应用平台的专业情感顾问，帮你解答各种恋爱问题，提供情感建议'
+      title: '智能体应用平台',
+      description: '智能体顾问，帮你解答各种问题'
     }
   },
   {
@@ -24,7 +24,7 @@ const routes = [
     component: () => import('../views/SuperAgent.vue'),
     meta: {
       title: 'AI智能体 - FUFU智能体应用平台',
-      description: 'AI智能体是鱼FUFU智能体应用平台的全能助手，能解答各类专业问题，提供不那麽精准建议和解决方案'
+      description: 'AI智能体是FUFU智能体应用平台的全能助手，能解答各类专业问题，提供不那麽精准建议和解决方案'
     }
   }
 ]
