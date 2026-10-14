@@ -12,7 +12,7 @@ CM AI Agent 是一个基于 Spring Boot 3 的多智能体应用示例，整合 S
 - **知识增强 (RAG)**：`FuFuApp` 通过文件式聊天记忆、查询改写与向量检索增强模型回答能力，默认会将 `classpath*:document/*.md` 下的 Markdown 文档加载进 SimpleVectorStore。
 - **外部工具与 MCP 扩展**：系统注册了文件操作、网页搜索/抓取、资源下载、终端命令、PDF 生成及终止器等工具，可供代理按需调用；其中终端工具默认使用 `cmd.exe`，在 Linux/Mac 上需要自行调整实现。
 - **多步骤智能体**：`FuManus` 继承自通用的 ReAct/ToolCall Agent 基类，拥有更详细的系统提示、步骤上限与 SSE 推送实现，适合处理复杂任务流。
-- **前端体验**：前端应用提供 FUFU 聊天界面，使用 SSE 持续接收分片消息并展示连接状态；API 基址默认指向生产地址，可按需改为本地后端。
+- **前端体验**：前端应用提供 FUFU 聊天界面，使用 SSE 持续接收分片消息并展示连接状态；API 基址由 `VITE_API_BASE_URL` 配置，未设置时使用同源 `/api`；Axios 与 SSE 共用该配置。
 - **基础运维能力**：提供 `/health` 健康检查方便探活与监控。
 
 ## 请求如何流动
@@ -66,7 +66,7 @@ flowchart LR
      api-key: ${SEARCH_API_KEY}
    ```
 3. 如需扩展知识库，将新的 Markdown 文档放入 `src/main/resources/document`，应用重启后会自动读取并写入向量库。
-4. 若后端部署在自定义域名/端口，请修改前端 `API_BASE_URL` 以指向正确的反向代理或网关地址。
+4. 若后端部署在自定义域名/端口，请设置前端 `VITE_API_BASE_URL`，使其指向正确的 API 基址（包含后端 context path）。
 5. 在非 Windows 环境下使用终端工具时，请将 `cmd.exe` 调整为适配本机的 shell（如 `/bin/bash`）。
 
 ## 后端运行
@@ -82,8 +82,12 @@ flowchart LR
 ```bash
 cd fu-ai-agent-frontend
 npm install
+cp .env.example .env.local
+# 根据实际后端地址修改 .env.local
 npm run dev
 ```
+`VITE_API_BASE_URL` 是公开的浏览器配置，会在构建时写入前端产物；模型 API Key 只配置在后端。修改 `.env.local` 后重启开发服务器，生产部署修改地址后需重新构建。未配置时，`/api` 请求发往前端同源，需要部署环境提供反向代理。
+
 开发服务器默认使用 Vite，运行后即可通过浏览器体验聊天界面。需要与后端进行跨域通信时，可借助后端 `CorsConfig` 允许来自任意来源的请求。
 
 ## 常见问题

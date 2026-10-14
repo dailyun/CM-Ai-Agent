@@ -1,11 +1,6 @@
 import axios from 'axios'
 
-// 根据环境变量设置 API 基础 URL
-
-const PORD_ENV = 'https://ai.furinabox.me:8124/api'
-const DEV_ENV = 'https://localhost:8123/api'
-const API_BASE_URL = PORD_ENV
-
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL?.trim() || '/api').replace(/\/+$/, '')
 
 // 创建axios实例
 const request = axios.create({
